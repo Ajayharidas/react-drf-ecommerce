@@ -1,0 +1,14 @@
+# Ignore Python virtual environments and other Python-related files
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Django
+.env
+
+# Docker
+*.log
+*.pid
+*.swp
