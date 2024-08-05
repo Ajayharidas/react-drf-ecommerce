@@ -4,9 +4,14 @@ from rest_framework.test import APIClient
 from django.urls import reverse
 from rest_framework import status
 from user.models import CustomUser
+from oauth2_provider.models import Application, AccessToken, RefreshToken
 
 
 class UserRegistrationTestCase(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        pass
+
     def setUp(self):
         self.client = APIClient()
         self.user_data = {
@@ -19,7 +24,7 @@ class UserRegistrationTestCase(TestCase):
         }
 
     def test_user_registration(self):
-        response = self.client.post(reverse("register"), self.user_data,format='json')
+        response = self.client.post(reverse("register"), self.user_data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         user = CustomUser.objects.get(username=self.user_data["username"])
@@ -29,7 +34,7 @@ class UserRegistrationTestCase(TestCase):
 
     def test_password_mismatch(self):
         self.user_data["confirm_password"] = "wrongpassword"
-        response = self.client.post(reverse("register"), self.user_data,format='json')
+        response = self.client.post(reverse("register"), self.user_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -42,7 +47,7 @@ class UserRegistrationTestCase(TestCase):
             "email": "testuser@gmail.com",
         }
 
-        response = self.client.post(reverse("register"), incomplete_data,format='json')
+        response = self.client.post(reverse("register"), incomplete_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -55,7 +60,7 @@ class UserRegistrationTestCase(TestCase):
             email="testuser1@gmail.com",
             password="testpassword1",
         )
-        response = self.client.post(reverse("register"), self.user_data,format='json')
+        response = self.client.post(reverse("register"), self.user_data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("username", response.data)
 
@@ -65,13 +70,13 @@ class UserRegistrationTestCase(TestCase):
             email=self.user_data["email"],
             password="testpassword1",
         )
-        response = self.client.post(reverse("register"), self.user_data,format='json')
+        response = self.client.post(reverse("register"), self.user_data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", response.data)
 
     def test_invalid_email_format(self):
         self.user_data["email"] = "invalid-email"
-        response = self.client.post(reverse("register"), self.user_data,format='json')
+        response = self.client.post(reverse("register"), self.user_data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", response.data)
 
@@ -80,7 +85,7 @@ class UserRegistrationTestCase(TestCase):
         for field in required_fields:
             data = self.user_data.copy()
             data.pop(field)
-            response = self.client.post(reverse("register"), data,format='json')
+            response = self.client.post(reverse("register"), data, format="json")
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertIn(field, response.data)
 
@@ -108,7 +113,7 @@ class UserRegistrationTestCase(TestCase):
             },
         ]
         for data in optional_list:
-            response = self.client.post(reverse("register"), data,format='json')
+            response = self.client.post(reverse("register"), data, format="json")
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
             # Check if the user was created in the database
@@ -117,57 +122,50 @@ class UserRegistrationTestCase(TestCase):
 
     def test_password_too_short(self):
         self.user_data["password"] = "short"
-        response = self.client.post(reverse("register"), self.user_data,format='json')
+        response = self.client.post(reverse("register"), self.user_data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("password", response.data)
 
 
-# class UserLoginTestCase(TestCase):
-#     def setUp(self):
-#         self.client = APIClient()
-#         self.model = CustomUser
-#         self.user_data = {"username": "testuser", "password": "testpassword"}
-
-#         # Create a user
-#         self.model.objects.create_user(
-#             username="testuser", email="testuser@gmail.com", password="testpassword"
-#         )
-
-#     def test_user_login(self):
-#         # Attempt to login with valid credentials
-#         response = self.client.post(reverse("login"), self.user_data)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         self.assertIn("username", response.data)
-#         self.assertIn("email", response.data)
-#         self.assertEqual(response.data["username"], self.user_data["username"])
-
-#         # Attempt to login with invalid credentials
-#         self.user_data["password"] = "wrongpassword"
-#         response = self.client.post(reverse("login"), self.user_data)
-#         self.assertIn("non_field_errors", response.data)
-#         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-
 class UserAuthenticationTestCase(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        user = CustomUser.objects.create_user(
+            username="testuser_uname",
+            email="testuser@gmail.com",
+            password="testpassword",
+        )
+        Application.objects.create(
+            user=user,
+            client_type="confidential",
+            authorization_grant_type="password",
+            hash_client_secret=False,
+        )
+
     def setUp(self):
         self.client = APIClient()
-        self.model = CustomUser
+        application = Application.objects.get(id=1)
         self.user_data = {
-            'grant_type':'password',
-            'username':'testuser_uname',
-            'password':'testpassword',
+            "grant_type": application.authorization_grant_type,
+            "username": application.user.username,
+            "password": "testpassword",
+            "client_id": application.client_id,
+            "client_secret": application.client_secret,
         }
 
-
     def test_user_authentication(self):
-        self.model.objects.create_user(username=self.user_data['username'],email='testuser@gmail.com',password=self.user_data['password'])
-
-        response = self.client.post(reverse('custom-token'), data=self.user_data,headers={'Content-Type':'application/json'})
+        response = self.client.post(
+            reverse("custom-token"),
+            data=json.dumps(self.user_data),
+            content_type="application/json",
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.assertIn('access_token', response.data)
-        self.assertIn('refresh_token', response.data)
-        
-        access_token = response.data['access_token']
-        response = self.client.post(reverse('verify-token'), {}, HTTP_AUTHORIZATION=f'Bearer {access_token}')
-        self.assertEqual(response.status_code,status.HTTP_200_OK)
+        self.assertIn("access_token", response.data)
+        self.assertIn("refresh_token", response.data)
+
+        access_token = response.data["access_token"]
+        response = self.client.get(
+            reverse("verify-token"), {}, HTTP_AUTHORIZATION=f"Bearer {access_token}"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

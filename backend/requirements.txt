@@ -8,3 +8,4 @@ gunicorn==22.0.0
 dj-database-url==2.2.0
 whitenoise==6.7.0
 brotli==1.1.0
+django-debug-toolbar==4.4.6

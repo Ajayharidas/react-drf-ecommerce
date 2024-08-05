@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 import os
 from oauth2_provider import settings as oauth2_settings
 import dj_database_url
+import sys
 
 load_dotenv()
 
@@ -31,7 +32,9 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG") == "True"
 
-ALLOWED_HOSTS = ["localhost"]
+ALLOWED_HOSTS = ["127.0.0.1","localhost"]
+
+INTERNAL_IPS = ["127.0.0.1","localhost"]
 
 
 # Application definition
@@ -91,13 +94,13 @@ WSGI_APPLICATION = "ecommerce.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {}
-
 if "DATABASE_URL" in os.environ:
-    DATABASES["default"] = dj_database_url.config(
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            conn_health_checks=True,
+        ),
+    }
 
 
 # Password validation
@@ -232,3 +235,18 @@ LOGGING = {
         },
     },
 }
+
+
+if DEBUG:
+    # `debug` is only True in templates if the vistor IP is in INTERNAL_IPS.
+    INTERNAL_IPS = type(str("c"), (), {"__contains__": lambda *a: True, "copy": lambda self: self})()
+
+ENABLE_DEBUG_TOOLBAR = DEBUG and "test" not in sys.argv
+if ENABLE_DEBUG_TOOLBAR:
+    INSTALLED_APPS += [
+        "debug_toolbar",
+    ]
+    MIDDLEWARE += [
+        "debug_toolbar.middleware.DebugToolbarMiddleware",
+    ]
+
