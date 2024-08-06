@@ -3,31 +3,65 @@ version: '3.8'
 services:
   db:
     image: postgres:13
+    container_name: db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    networks:
+      - ecomnetwork
 
   backend:
     build:
       context: ./backend
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - ./backend:/django-app
+    container_name: backend
+    command: gunicorn ecommerce.wsgi:application --bind 0.0.0.0:8000
+    # volumes:
+    #   - ./backend:/django-app # if we copy project to docker directory in Dockerfile  this live will override it
     ports:
       - "8000:8000"
     depends_on:
       - db
+    networks:
+      - ecomnetwork
 
   frontend:
     build:
       context: ./frontend
-    volumes:
-      - ./frontend:/react-app/ecommerce
+    container_name: frontend
+    command: npm run dev
     ports:
       - "5173:5173"
+    networks:
+      - ecomnetwork
+  
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - type: bind
+        source: ./frontend/ecommerce
+        target: /usr/share/nginx/html
+      - type: bind
+        source: ./backend/staticfiles
+        target: /app/staticfiles
+      - type: bind
+        source: ./backend/media
+        target: /app/media
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - ecomnetwork
+
+networks:
+  ecomnetwork:
+    driver: bridge
+
 
 volumes:
   postgres_data:

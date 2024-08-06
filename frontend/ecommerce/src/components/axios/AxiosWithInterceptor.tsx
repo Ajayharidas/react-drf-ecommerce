@@ -1,4 +1,4 @@
-import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig,AxiosRequestHeaders } from "axios";
 import { useNavigate } from "react-router-dom";
 import useAxios from "./Axios";
 
@@ -57,7 +57,7 @@ const useAxiosWithInterceptor = (
 
   // Request interceptor to add the access token to headers
   axios.interceptors.request.use(
-    (config: AxiosRequestConfig) => {
+    (config: InternalAxiosRequestConfig) => {
       const token = localStorage.getItem("access_token");
 
       console.log(config.url);
@@ -74,7 +74,7 @@ const useAxiosWithInterceptor = (
         );
         if (token) {
           // Add Authorization header if token is present
-          config.headers.Authorization = `Bearer ${token}`;
+          (config.headers as AxiosRequestHeaders)['Authorization'] = `Bearer ${token}`;
           console.log("Authorization header added");
         } else {
           console.log("No access token found");
