@@ -11,7 +11,7 @@ const CustomGoogleLogin: React.FC = () => {
       try {
         await axios.post("/api/exchange-code/", {
           grant_type: "authorization_code",
-          redirect_uri: "http://localhost:5173",
+          redirect_uri: "http://localhost",
           code: response.code,
         });
       } catch (error) {

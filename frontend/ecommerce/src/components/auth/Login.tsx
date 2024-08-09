@@ -55,9 +55,9 @@ const Login: React.FC = () => {
         <button type="submit" className="btn btn-primary">
           Login
         </button>
-        <CustomGoogleLogin />
-        <CustomFacebookLogin />
       </form>
+      <CustomGoogleLogin />
+      <CustomFacebookLogin />
     </>
   );
 };

@@ -1,4 +1,9 @@
-import { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig,AxiosRequestHeaders } from "axios";
+import {
+  AxiosInstance,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+  AxiosRequestHeaders,
+} from "axios";
 import { useNavigate } from "react-router-dom";
 import useAxios from "./Axios";
 
@@ -74,7 +79,9 @@ const useAxiosWithInterceptor = (
         );
         if (token) {
           // Add Authorization header if token is present
-          (config.headers as AxiosRequestHeaders)['Authorization'] = `Bearer ${token}`;
+          (config.headers as AxiosRequestHeaders)[
+            "Authorization"
+          ] = `Bearer ${token}`;
           console.log("Authorization header added");
         } else {
           console.log("No access token found");
@@ -90,7 +97,10 @@ const useAxiosWithInterceptor = (
     async (response: AxiosResponse) => {
       // If response status is 201 and username & password are provided, authenticate the user
       let auth_response = response;
-      if (auth_response.status === 201) {
+      const id_token = auth_response.data?.id_token;
+      const token = auth_response.data?.access_token;
+      const status = auth_response.status;
+      if (status === 201) {
         if (username && password) {
           auth_response = await axios.post<{
             access_token: string;
@@ -102,9 +112,16 @@ const useAxiosWithInterceptor = (
           });
         }
       }
-      if (auth_response.status === 200) {
-        const access_token = response.data?.access_token;
-        const refresh_token = response.data?.refresh_token;
+      if (status === 200) {
+        if (id_token) {
+          auth_response = await axios.post("api/convert-token/", {
+            grant_type: "convert_token",
+            token: token,
+            backend: "google-oauth2",
+          });
+        }
+        const access_token = auth_response.data?.access_token;
+        const refresh_token = auth_response.data?.refresh_token;
         if (access_token && refresh_token) {
           localStorage.setItem("access_token", access_token);
           localStorage.setItem("refresh_token", refresh_token);

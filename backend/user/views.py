@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.http import QueryDict
 from rest_framework.request import Request
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -17,9 +18,9 @@ import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from oauth2_provider.contrib.rest_framework import OAuth2Authentication
-from drf_social_oauth2.views import TokenView
+from drf_social_oauth2.views import TokenView, ConvertTokenView
 from user.decorators import modify_token_view_decorator
-from user.services import google_get_tokens, google_get_user
+from user.services import google_get_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -54,12 +55,13 @@ class GoogleExchangeCodeView(APIView):
         serializer.is_valid(raise_exception=True)
         serialized_data = serializer.validated_data
         response = google_get_tokens(data=serialized_data)
-        if not response.ok:
-            return Response(data=response.json(), status=response.status_code)
-        response_json = response.json()
-        access_token = response_json.get("access_token", None)
-        response = google_get_user(access_token=access_token)
         return Response(data=response.json(), status=response.status_code)
+
+
+class CustomConvertTokenView(ConvertTokenView):
+    def post(self, request: Request, *args, **kwargs):
+        request.data["client_id"] = settings.CLIENT_ID
+        return super().post(request, *args, **kwargs)
 
 
 @method_decorator(modify_token_view_decorator, name="dispatch")

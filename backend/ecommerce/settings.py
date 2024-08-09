@@ -32,9 +32,9 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG") == "True"
 
-ALLOWED_HOSTS = ["127.0.0.1","localhost"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
-INTERNAL_IPS = ["127.0.0.1","localhost"]
+INTERNAL_IPS = ["127.0.0.1", "localhost"]
 
 
 # Application definition
@@ -96,7 +96,7 @@ WSGI_APPLICATION = "ecommerce.wsgi.application"
 
 if "DATABASE_URL" in os.environ:
     DATABASES = {
-        'default': dj_database_url.config(
+        "default": dj_database_url.config(
             conn_max_age=600,
             conn_health_checks=True,
         ),
@@ -184,6 +184,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://0.0.0.0:5173",
 ]
 
+
 BASE_URL = "http://localhost:8000"
 
 # Django OAuth2 configuration
@@ -239,7 +240,9 @@ LOGGING = {
 
 if DEBUG:
     # `debug` is only True in templates if the vistor IP is in INTERNAL_IPS.
-    INTERNAL_IPS = type(str("c"), (), {"__contains__": lambda *a: True, "copy": lambda self: self})()
+    INTERNAL_IPS = type(
+        str("c"), (), {"__contains__": lambda *a: True, "copy": lambda self: self}
+    )()
 
 ENABLE_DEBUG_TOOLBAR = DEBUG and "test" not in sys.argv
 if ENABLE_DEBUG_TOOLBAR:
@@ -249,4 +252,3 @@ if ENABLE_DEBUG_TOOLBAR:
     MIDDLEWARE += [
         "debug_toolbar.middleware.DebugToolbarMiddleware",
     ]
-

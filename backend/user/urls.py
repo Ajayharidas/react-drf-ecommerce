@@ -7,12 +7,14 @@ from user.views import (
     CustomTokenView,
     CustomRevokeTokenView,
     GoogleExchangeCodeView,
+    CustomConvertTokenView,
 )
 
 
 urlpatterns = [
     path("home", HomeAPIView, name="home"),
     path("api/register/", UserRegistrationAPIView.as_view(), name="register"),
+    path("api/convert-token/", CustomConvertTokenView.as_view(), name="convert-token"),
     path("api/custom-token/", CustomTokenView.as_view(), name="custom-token"),
     path("api/verify-token/", VerifyTokenView.as_view(), name="verify-token"),
     path("api/revoke-token/", CustomRevokeTokenView.as_view(), name="revoke-token"),
