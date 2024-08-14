@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import useAxiosWithInterceptor from "../axios/AxiosWithInterceptor";
 import CustomGoogleLogin from "../hook/GoogleHooks";
 import CustomFacebookLogin from "../hook/FacebookHook";
+import { useNavigate } from "react-router-dom";
 
 const Login: React.FC = () => {
   const initialdata = Object.freeze({
@@ -9,6 +10,8 @@ const Login: React.FC = () => {
     username: "",
     password: "",
   });
+
+  const navigate = useNavigate();
 
   const [formdata, setFormdata] = useState(initialdata);
   const axios = useAxiosWithInterceptor(formdata.username, formdata.password);
@@ -25,6 +28,7 @@ const Login: React.FC = () => {
     e.preventDefault();
     try {
       await axios.post("api/custom-token/", formdata);
+      navigate("/");
     } catch (error) {
       console.error("Error in user login", error);
     }

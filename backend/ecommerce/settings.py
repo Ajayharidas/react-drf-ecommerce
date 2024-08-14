@@ -32,15 +32,17 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG") == "True"
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost","14a1-223-227-52-40.ngrok-free.app"]
 
-INTERNAL_IPS = ["127.0.0.1", "localhost"]
+INTERNAL_IPS = [
+    "127.0.0.1",
+    "localhost",
+]
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    "whitenoise.runserver_nostatic",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -50,6 +52,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "user",
+    "category",
+    "product",
+    "brand",
     # oauth2
     "oauth2_provider",
     "social_django",
@@ -58,7 +63,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -143,11 +147,9 @@ STATIC_URL = "/static/"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STORAGES = {
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR,'media/')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -180,14 +182,15 @@ AUTHENTICATION_BACKENDS = (
 )
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
     "http://0.0.0.0:5173",
+    "http://localhost:5173",
+    "https://14a1-223-227-52-40.ngrok-free.app",
 ]
 
 
 BASE_URL = "http://localhost:8000"
 
-# Django OAuth2 configuration
+# Django OAuth2 application credentials
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
@@ -239,7 +242,7 @@ LOGGING = {
 
 
 if DEBUG:
-    # `debug` is only True in templates if the vistor IP is in INTERNAL_IPS.
+    # `debug` is only True in templates if the visitor IP is in INTERNAL_IPS.
     INTERNAL_IPS = type(
         str("c"), (), {"__contains__": lambda *a: True, "copy": lambda self: self}
     )()

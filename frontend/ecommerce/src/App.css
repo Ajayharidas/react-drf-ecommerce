@@ -3,3 +3,110 @@
   margin: 0;
 }
 
+.navbar-expand-lg {
+  background-color: #decf0e !important;
+  line-height: 3 !important;
+  font-weight: 400 !important;
+}
+
+.navbar-expand-lg .navbar-nav .nav-link {
+  color: white !important;
+  font-size: small !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+}
+
+.navbar-search-btn {
+  background-color: transparent !important;
+  border-color: #ffffffc4 !important;
+  color: white !important;
+  transition: none !important;
+  margin: 0 5em;
+}
+
+.navbar-search-btn:focus,
+.navbar-search-popup:focus,
+.navbar-search-input:focus {
+  box-shadow: none !important;
+}
+
+.navbar-search-text {
+  padding-left: 15rem !important;
+}
+
+.visible {
+  visibility: visible;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+.navbar-search-popup {
+  position: absolute !important;
+  display: flex;
+  top: 0;
+  justify-content: center;
+  height: 100vh;
+  background-color: #0000000d !important;
+  transition: none !important;
+  width: 100vw;
+}
+
+.navbar-search-popup-child {
+  display: flex;
+  flex-direction: column;
+  width: 50% !important;
+  margin-top: 1em;
+  gap: 0.1em;
+}
+
+.navbar-search-input {
+  background-color: #928a21 !important;
+  border-right: none !important;
+  border-left: none !important;
+  border-color: #ffffffc4 !important;
+  color: white !important;
+  height: 2.5em;
+  font-style: italic;
+}
+
+.navbar-search-input::placeholder {
+  color: rgb(165, 165, 165) !important;
+}
+
+.navbar-search-input:focus {
+  border-right: none !important;
+  border-left: none !important;
+  border-color: #ffffffc4 !important;
+}
+
+.navbar-search-input-right-text,
+.navbar-search-input-right-text:focus,
+.navbar-search-input-left-text,
+.navbar-search-input-left-text:focus {
+  border-color: #ffffffc4 !important;
+  background-color: #928a21 !important;
+  color: #ffffffc4 !important;
+}
+
+.navbar-search-input-right-text,
+.navbar-search-input-right-text:focus {
+  border-left: none !important;
+}
+
+.navbar-search-input-left-text,
+.navbar-search-input-left-text:focus {
+  border-right: none !important;
+}
+
+
+.navbar-search-ul {
+  color: white;
+  background-color: #928a21;
+  border-radius: .3em;
+}
+
+.navbar-search-ul li {
+  list-style: none;
+}

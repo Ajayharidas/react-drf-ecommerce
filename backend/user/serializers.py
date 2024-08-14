@@ -2,9 +2,11 @@ from django.conf import settings
 from requests import delete
 from rest_framework import serializers, status
 from rest_framework.response import Response
+from product.models import Product
 from user.models import CustomUser
 from django.contrib.auth import authenticate
 from django.core.validators import MinLengthValidator
+from category.serializers import CategorySerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -52,9 +54,24 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 class RevokeTokenSerializer(serializers.Serializer):
     client_id = serializers.CharField(max_length=200)
 
+
 class ExchangeCodeSerializer(serializers.Serializer):
     grant_type = serializers.CharField(max_length=50)
     code = serializers.CharField(max_length=500)
     client_id = serializers.CharField(max_length=500)
     client_secret = serializers.CharField(max_length=500)
     redirect_uri = serializers.CharField(max_length=100)
+
+
+class HomeSerializer(serializers.Serializer):
+    parent_categories = CategorySerializer(many=True)
+    child_categories = CategorySerializer(many=True)
+
+
+class SearchSerializer(serializers.ModelSerializer):
+    match_type = serializers.CharField()
+    category = CategorySerializer(many=True)
+
+    class Meta:
+        model = Product
+        fields = ("id", "name", "category", "match_type")

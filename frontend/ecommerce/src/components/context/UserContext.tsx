@@ -5,6 +5,8 @@ import React, {
   ReactNode,
   FC,
 } from "react";
+import useAxiosWithInterceptor from "../axios/AxiosWithInterceptor";
+import { AxiosResponse } from "axios";
 
 interface User {
   id: number;
@@ -14,50 +16,69 @@ interface User {
   email: string;
 }
 
-// Define the interface for the context value
 interface UserContextType {
   isAuthenticated: boolean;
   setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
   user: User | null;
-  handleuser: React.Dispatch<React.SetStateAction<User | null>>;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  verifyToken: () => void;
 }
 
-// Create the context with an initial value
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-// Define the context provider component props
 interface UserContextProviderProps {
   children: ReactNode;
 }
 
-// Define the context provider component
 const UserContextProvider: FC<UserContextProviderProps> = ({ children }) => {
+  const axios = useAxiosWithInterceptor();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
 
-  const handleuser: React.Dispatch<React.SetStateAction<User | null>> = (
-    data
-  ) => {
-    setUser(data);
+  const verifyToken = async () => {
+    const token = localStorage.getItem("access_token");
+
+    try {
+      if (token) {
+        const response: AxiosResponse<{ user: User }> = await axios.get(
+          "api/verify-token/"
+        );
+
+        if (response.status === 200) {
+          setIsAuthenticated(true);
+          setUser(response.data.user);
+        }
+      }
+    } catch (error) {
+      console.error("Error verifying token:", error);
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setIsAuthenticated(false);
+      setUser(null);
+    }
   };
 
   return (
     <UserContext.Provider
-      value={{ isAuthenticated, setIsAuthenticated, user, handleuser }}
+      value={{
+        isAuthenticated,
+        setIsAuthenticated,
+        user,
+        setUser,
+        verifyToken,
+      }}
     >
       {children}
     </UserContext.Provider>
   );
 };
 
-// Custom hook to use the UserContext
 const useUserContext = (): UserContextType => {
   const context = useContext(UserContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useUserContext must be used within a UserContextProvider");
   }
   return context;
 };
 
-// Export the provider and the custom hook
 export { UserContextProvider, useUserContext };

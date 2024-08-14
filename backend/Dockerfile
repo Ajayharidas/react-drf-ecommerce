@@ -10,10 +10,15 @@ WORKDIR /django-app
 
 # Install dependencies
 COPY requirements.txt /django-app/
-RUN pip install --no-cache --upgrade pip
-RUN pip install --no-cache -r requirements.txt
-RUN pip install --no-cache gunicorn
+RUN pip install --no-cache --upgrade pip \
+    && pip install --no-cache -r requirements.txt \
+    && pip install --no-cache gunicorn
 
 # Copy project
 COPY . /django-app/
 
+# Ensure entrypoint script is executable
+RUN chmod +x /django-app/entrypoint.sh
+
+# Set the entrypoint to the script
+ENTRYPOINT [ "/django-app/entrypoint.sh" ]

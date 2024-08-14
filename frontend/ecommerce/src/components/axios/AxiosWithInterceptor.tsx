@@ -4,7 +4,6 @@ import {
   InternalAxiosRequestConfig,
   AxiosRequestHeaders,
 } from "axios";
-import { useNavigate } from "react-router-dom";
 import useAxios from "./Axios";
 
 const useAxiosWithInterceptor = (
@@ -13,8 +12,6 @@ const useAxiosWithInterceptor = (
 ): AxiosInstance => {
   // Create an Axios instance with base URL and default headers
   const axios = useAxios();
-
-  const navigate = useNavigate();
 
   // Flag to track if a token refresh is in progress
   let isRefreshing = false;
@@ -60,33 +57,61 @@ const useAxiosWithInterceptor = (
     refreshSubscribers.push(callback);
   };
 
-  // Request interceptor to add the access token to headers
-  axios.interceptors.request.use(
-    (config: InternalAxiosRequestConfig) => {
-      const token = localStorage.getItem("access_token");
-
-      console.log(config.url);
-
-      // Define URLs that require authorization
-      const urlsRequiringAuth = ["api/verify-token/", "api/revoke-token/"];
-      const requiresAuth = urlsRequiringAuth.some((url) =>
-        config.url?.includes(url)
+  // Function to get CSRF token from django
+  const getCSRFToken = async (): Promise<string> => {
+    try {
+      const response: AxiosResponse<{ csrf_token: string }> = await axios.get(
+        "api/csrf-token/"
       );
 
-      if (requiresAuth) {
-        console.log(
-          `Request made to ${config.url} with method ${config.method}`
-        );
-        if (token) {
-          // Add Authorization header if token is present
-          (config.headers as AxiosRequestHeaders)[
-            "Authorization"
-          ] = `Bearer ${token}`;
-          console.log("Authorization header added");
-        } else {
-          console.log("No access token found");
+      if (response.data?.csrf_token) {
+        return response.data.csrf_token;
+      } else {
+        throw new Error("CSRF token not found in the response");
+      }
+    } catch (error) {
+      console.error("Failed to retrieve CSRF token:", error);
+      throw new Error("Unable to retrieve CSRF token");
+    }
+  };
+
+  // Request interceptor to add the access token to headers
+  axios.interceptors.request.use(
+    async (config: InternalAxiosRequestConfig) => {
+      const token = localStorage.getItem("access_token");
+      console.log(token);
+
+      if (token) {
+        // Add Authorization header if token is present
+        (config.headers as AxiosRequestHeaders)[
+          "Authorization"
+        ] = `Bearer ${token}`;
+        console.log("Authorization header added");
+      }
+
+      console.log(`Request header : ${config.headers}`);
+
+      // Define methods that require csrf token
+      const methods = ["put", "patch", "post", "delete"];
+      const requiresMethod = methods.some((method) =>
+        config.method?.includes(method)
+      );
+
+      if (requiresMethod) {
+        try {
+          const csrfToken = await getCSRFToken();
+          console.log("CSRF Token:", csrfToken);
+          if (csrfToken) {
+            (config.headers as AxiosRequestHeaders)["X-CSRFToken"] = csrfToken;
+            console.log("CSRF token added to headers");
+          }
+        } catch (error) {
+          console.error("Error fetching CSRF token:", error);
         }
       }
+
+      console.log(`Updated request header : ${config.headers}`);
+
       return config;
     },
     (error) => Promise.reject(error)
@@ -125,7 +150,6 @@ const useAxiosWithInterceptor = (
         if (access_token && refresh_token) {
           localStorage.setItem("access_token", access_token);
           localStorage.setItem("refresh_token", refresh_token);
-          navigate("/");
         }
       }
       return auth_response;

@@ -1,16 +1,19 @@
 from django.conf import settings
-from django.http import QueryDict
+from django.middleware.csrf import get_token
 from rest_framework.request import Request
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import generics, status
 from rest_framework.views import APIView
+from product.models import Product
 from user.serializers import (
+    SearchSerializer,
     UserRegistrationSerializer,
     UserSerializer,
     RevokeTokenSerializer,
     ExchangeCodeSerializer,
+    HomeSerializer,
 )
 from oauth2_provider.models import AccessToken, RefreshToken, Application
 from django.utils.translation import gettext_lazy as _
@@ -21,6 +24,8 @@ from oauth2_provider.contrib.rest_framework import OAuth2Authentication
 from drf_social_oauth2.views import TokenView, ConvertTokenView
 from user.decorators import modify_token_view_decorator
 from user.services import google_get_tokens
+from category.models import Category
+from django.db.models import Q, Value, Case, When, CharField
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +35,19 @@ base_url = settings.BASE_URL
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def HomeAPIView(request):
-    user = request.user
-    print(user)
-    return Response({"message": "Hello, World!", "user": str(user)})
+    parent_categories = Category.objects.filter(parent__isnull=True)
+    child_categories = Category.objects.filter(parent__isnull=False)
+    serializer = HomeSerializer(
+        {"parent_categories": parent_categories, "child_categories": child_categories}
+    )
+    return Response(data=serializer.data)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def CSRFTokenAPIView(request):
+    csrf_token = get_token(request)
+    return Response({"csrf_token": csrf_token})
 
 
 class UserRegistrationAPIView(generics.CreateAPIView):
@@ -91,8 +106,7 @@ class VerifyTokenView(APIView):
                 if not access_token.is_expired() and access_token.is_valid():
                     user_serializer = UserSerializer(access_token.user)
                     return Response(
-                        {"status": "Token is valid", "user": user_serializer.data},
-                        status=status.HTTP_200_OK,
+                        {"user": user_serializer.data}, status=status.HTTP_200_OK
                     )
                 else:
                     return Response(
@@ -150,3 +164,43 @@ class CustomRevokeTokenView(APIView):
         return Response(
             {"status": "Token revoked successfully."}, status=status.HTTP_204_NO_CONTENT
         )
+
+
+# class SearchProductView(generics.ListAPIView):
+#     serializer_class = SearchSerializer
+
+
+#     def get_queryset(self):
+#         query = self.request.GET.get("query", "")
+#         print(f"Query : {query}")
+#         return Product.objects.filter(
+#             Q(name__istartswith=query) | Q(category__name__istartswith=query)
+#         ).annotate(
+#             match_type=Case(
+#                 When(name__istartswith=query, then=Value("name")),
+#                 When(category__name__istartswith=query, then=Value("category")),
+#                 output_field=CharField(),
+#             )
+#         )
+class SearchProductView(APIView):
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get("query", "")
+        if not query:
+            return Response(
+                {"message": "Query not found"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        category_queryset = (
+            Category.objects.filter(name__istartswith=query)
+            .values("id", "name")
+            .annotate(type=Value("category", output_field=CharField()))
+        )
+
+        product_queryset = (
+            Product.objects.filter(name__istartswith=query)
+            .values("id", "name")
+            .annotate(type=Value("product", output_field=CharField()))
+        )
+
+        final_queryset = list(category_queryset) + list(product_queryset)
+        return Response(data=final_queryset)

@@ -1,7 +1,16 @@
 import axios, { AxiosInstance } from "axios";
 
 const useAxios = (): AxiosInstance => {
-  const baseURL = "http://localhost/";
+  const get_baseURL = () => {
+    const hostname = window.location.hostname;
+    console.log(hostname);
+
+    if (hostname === "localhost") {
+      return `http://${hostname}`;
+    }
+    return `https://${hostname}`;
+  };
+  const baseURL = get_baseURL();
   const axiosInstance = axios.create({
     baseURL: baseURL,
     timeout: 300000,

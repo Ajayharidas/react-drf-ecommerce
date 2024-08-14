@@ -1,13 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import SearchModal from "./SearchModal";
 
 const Header: React.FC = () => {
+  const [btnVisibility, setBtnVisibility] = useState(true);
+  const [popupVisibility, setPopupVisibility] = useState(false);
+  const handlePopup = () => {
+    setPopupVisibility(true);
+    setBtnVisibility(false);
+  };
   return (
     <>
-      <nav className="navbar navbar-expand-lg navbar-light bg-light">
-        <a className="navbar-brand" href="#">
-          Navbar
-        </a>
+      <nav className="navbar navbar-expand-lg">
         <button
           className="navbar-toggler"
           type="button"
@@ -25,6 +29,11 @@ const Header: React.FC = () => {
             <li className="nav-item active">
               <Link className="nav-link" to={"/"}>
                 Home
+              </Link>
+            </li>
+            <li className="nav-item active">
+              <Link className="nav-link" to={"/products"}>
+                Products
               </Link>
             </li>
             <li className="nav-item">
@@ -68,20 +77,22 @@ const Header: React.FC = () => {
               </Link>
             </li>
           </ul>
-          <form className="form-inline my-2 my-lg-0">
-            <input
-              className="form-control mr-sm-2"
-              type="search"
-              placeholder="Search"
-              aria-label="Search"
-            />
+          <SearchModal
+            popupVisibility={popupVisibility}
+            setPopupVisibility={setPopupVisibility}
+            setBtnVisibility={setBtnVisibility}
+          />
+          <div className="ml-auto flex-grow-1">
             <button
-              className="btn btn-outline-success my-2 my-sm-0"
-              type="submit"
+              className={`my-2 my-lg-0 btn navbar-search-btn ${
+                btnVisibility ? "visible" : "hidden"
+              }`}
+              onClick={handlePopup}
             >
-              Search
+              <i className="bi bi-search "></i>
+              <span className="navbar-search-text">Type to search</span>
             </button>
-          </form>
+          </div>
         </div>
       </nav>
     </>

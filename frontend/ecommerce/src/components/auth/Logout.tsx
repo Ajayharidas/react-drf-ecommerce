@@ -6,7 +6,7 @@ import { useUserContext } from "../context/UserContext";
 const Logout: React.FC = () => {
   const navigate = useNavigate();
   const axios = useAxiosWithInterceptor();
-  const { setIsAuthenticated, handleuser } = useUserContext();
+  const { setIsAuthenticated, setUser } = useUserContext();
   const handleLogout = async () => {
     try {
       const response = await axios.post("api/revoke-token/", {});
@@ -15,7 +15,7 @@ const Logout: React.FC = () => {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         setIsAuthenticated(false);
-        handleuser(null);
+        setUser(null);
         navigate("/");
       }
     } catch (error) {

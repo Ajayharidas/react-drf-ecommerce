@@ -32,7 +32,7 @@ const CustomFacebookLogin: React.FC = () => {
   return (
     <FacebookProvider appId="989625229043444">
       <LoginButton
-        scope="email"
+        scope="public_profile"
         onSuccess={() => handleResponse}
         onError={handleError}
       >
