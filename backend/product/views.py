@@ -9,3 +9,4 @@ from oauth2_provider.contrib.rest_framework import OAuth2Authentication
 # @permission_classes([IsAuthenticated])
 def ProductAPIView(request):
     return Response({"message":"Valid access_token"},status=status.HTTP_202_ACCEPTED)
+

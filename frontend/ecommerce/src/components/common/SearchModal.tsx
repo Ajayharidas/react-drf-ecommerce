@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import useAxiosWithInterceptor from "../axios/AxiosWithInterceptor";
+import { Link } from "react-router-dom";
 
 interface SearchModalProps {
   popupVisibility: boolean;
@@ -7,14 +8,11 @@ interface SearchModalProps {
   setBtnVisibility: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-interface Type {
-  type: string;
-}
-
 interface SearchItems {
   id: number;
   name: string;
-  type: Type;
+  slug: string;
+  type: string;
 }
 
 const SearchModal: React.FC<SearchModalProps> = ({
@@ -63,8 +61,8 @@ const SearchModal: React.FC<SearchModalProps> = ({
             <input
               type="text"
               className="form-control navbar-search-input"
-              placeholder="Type product or category name"
-              aria-label="Type product or category name"
+              placeholder="type product or category name"
+              aria-label="type product or category name"
               onChange={handleSearch}
             />
             <span
@@ -87,9 +85,17 @@ const SearchModal: React.FC<SearchModalProps> = ({
               items.map((item) => (
                 <li
                   key={`${item.type}-${item.id}`}
-                  className="navbar-search-item"
+                  className="navbar-search-li"
                 >
-                  {item.name}
+                  <Link
+                    to={
+                      item.type === "category"
+                        ? `category/${item.slug}`
+                        : `product/${item.slug}`
+                    }
+                  >
+                    {item.name}
+                  </Link>
                 </li>
               ))
             ) : (

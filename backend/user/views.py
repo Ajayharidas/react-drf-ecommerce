@@ -192,13 +192,13 @@ class SearchProductView(APIView):
 
         category_queryset = (
             Category.objects.filter(name__istartswith=query)
-            .values("id", "name")
+            .values("id", "name", "slug")
             .annotate(type=Value("category", output_field=CharField()))
         )
 
         product_queryset = (
             Product.objects.filter(name__istartswith=query)
-            .values("id", "name")
+            .values("id", "name", "slug")
             .annotate(type=Value("product", output_field=CharField()))
         )
 

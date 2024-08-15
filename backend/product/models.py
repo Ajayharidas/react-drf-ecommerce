@@ -15,7 +15,6 @@ class Gender(models.Model):
 
 class Product(models.Model):
     class ProductManager(models.Manager):
-
         def get_queryset(self):
             products = (
                 super()
@@ -47,7 +46,11 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            slug_string = ""
+            for category in self.category.all():
+                slug_string += category.name + " "
+            slug_string += self.name
+            self.slug = slugify(slug_string.strip()).replace("-", "+")
         super().save(*args, **kwargs)
 
     def __str__(self):
