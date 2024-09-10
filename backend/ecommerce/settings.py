@@ -32,7 +32,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG") == "True"
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost","14a1-223-227-52-40.ngrok-free.app"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "14a1-223-227-52-40.ngrok-free.app"]
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -59,6 +59,8 @@ INSTALLED_APPS = [
     "oauth2_provider",
     "social_django",
     "drf_social_oauth2",
+    # elasticsearch
+    "django_elasticsearch_dsl",
 ]
 
 MIDDLEWARE = [
@@ -148,8 +150,8 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR,'media/')
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -169,6 +171,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
     ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 1,
 }
 
 AUTHENTICATION_BACKENDS = (
@@ -255,3 +259,11 @@ if ENABLE_DEBUG_TOOLBAR:
     MIDDLEWARE += [
         "debug_toolbar.middleware.DebugToolbarMiddleware",
     ]
+
+
+ELASTICSEARCH_DSL = {
+    "default": {
+        "hosts": "http://elasticsearch:9200",
+        # "http_auth": ("username", "password"),
+    }
+}

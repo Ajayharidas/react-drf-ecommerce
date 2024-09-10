@@ -15,12 +15,7 @@ class Category(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            if self.parent:
-                full_name = f"{self.parent.name} {self.name}"
-            else:
-                full_name = self.name
-            self.slug = slugify(full_name).replace("-", "+")
+        self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
     def __str__(self):

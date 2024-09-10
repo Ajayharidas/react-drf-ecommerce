@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from brand.models import Brand
 from category.models import Category
@@ -45,12 +46,7 @@ class Product(models.Model):
     productobjects = ProductManager()
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            slug_string = ""
-            for category in self.category.all():
-                slug_string += category.name + " "
-            slug_string += self.name
-            self.slug = slugify(slug_string.strip()).replace("-", "+")
+        self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
     def __str__(self):

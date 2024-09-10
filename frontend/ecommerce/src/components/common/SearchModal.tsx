@@ -1,6 +1,12 @@
-import React, { useState } from "react";
+import React, {
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import useAxiosWithInterceptor from "../axios/AxiosWithInterceptor";
 import { Link } from "react-router-dom";
+import { useSearchContext } from "../context/SearchContext";
 
 interface SearchModalProps {
   popupVisibility: boolean;
@@ -15,26 +21,29 @@ interface SearchItems {
   type: string;
 }
 
-const SearchModal: React.FC<SearchModalProps> = ({
-  popupVisibility,
-  setPopupVisibility,
-  setBtnVisibility,
-}) => {
+export type InputRef = {
+  focusInput: () => void;
+};
+
+const SearchModal = (props: SearchModalProps, ref: React.Ref<InputRef>) => {
   const axios = useAxiosWithInterceptor();
   const [listVisibility, setListVisibility] = useState(false);
   const [items, setItems] = useState<SearchItems[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const searchRef = useRef<HTMLInputElement | null>(null);
+  const { handleUserSearch } = useSearchContext();
 
   const handleSearch = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const query = event.target.value;
-    console.log(query);
-    if (query.trim() === "") {
+    setSearchQuery(event.target.value);
+    console.log(searchQuery);
+    if (searchQuery === "") {
       setItems([]);
       setListVisibility(false);
       return;
     }
     try {
       const response = await axios.get<SearchItems[]>(
-        `api/search/?query=${query}`
+        `api/search/?query=${searchQuery.trim()}`
       );
       if (response.status === 200) {
         console.log(response.data);
@@ -46,11 +55,35 @@ const SearchModal: React.FC<SearchModalProps> = ({
       setItems([]);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    focusInput: () => {
+      setTimeout(() => {
+        searchRef.current?.focus();
+      }, 100);
+    },
+  }));
+
+  const handleVisibility = (id?: number, type?: string, slug?: string) => {
+    if (id && type && slug) {
+      handleUserSearch({
+        id: id,
+        type: type,
+        slug: slug,
+      });
+    }
+    props.setPopupVisibility(false);
+    setListVisibility(false);
+    props.setBtnVisibility(true);
+    setSearchQuery("");
+  };
+
+  console.log(searchRef.current);
   return (
     <>
       <div
         className={`navbar-search-popup ${
-          popupVisibility ? "visible" : "hidden"
+          props.popupVisibility ? "visible" : "hidden"
         }`}
       >
         <div className="navbar-search-popup-child">
@@ -64,14 +97,12 @@ const SearchModal: React.FC<SearchModalProps> = ({
               placeholder="type product or category name"
               aria-label="type product or category name"
               onChange={handleSearch}
+              value={searchQuery}
+              ref={searchRef}
             />
             <span
               className="input-group-text navbar-search-input-right-text"
-              onClick={() => {
-                setPopupVisibility(false);
-                setListVisibility(false);
-                setBtnVisibility(true);
-              }}
+              onClick={() => handleVisibility()}
             >
               <i className="bi bi-x-circle-fill"></i>
             </span>
@@ -83,15 +114,13 @@ const SearchModal: React.FC<SearchModalProps> = ({
           >
             {items.length > 0 ? (
               items.map((item) => (
-                <li
-                  key={`${item.type}-${item.id}`}
-                  className="navbar-search-li"
-                >
+                <li key={item.id} className="navbar-search-li">
                   <Link
-                    to={
-                      item.type === "category"
-                        ? `category/${item.slug}`
-                        : `product/${item.slug}`
+                    to={`${item.type === "brand" ? "brand" : "category"}/${
+                      item.slug
+                    }`}
+                    onClick={() =>
+                      handleVisibility(item.id, item.type, item.slug)
                     }
                   >
                     {item.name}
@@ -99,7 +128,7 @@ const SearchModal: React.FC<SearchModalProps> = ({
                 </li>
               ))
             ) : (
-              <li className="navbar-search-item">--- No items ---</li>
+              <li className="navbar-search-li">--- No items ---</li>
             )}
           </ul>
         </div>
@@ -108,4 +137,4 @@ const SearchModal: React.FC<SearchModalProps> = ({
   );
 };
 
-export default SearchModal;
+export default forwardRef(SearchModal);

@@ -58,6 +58,21 @@ services:
     networks:
       - ecomnetwork
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    container_name: elasticsearch
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    mem_limit: 1g
+    depends_on:
+      - backend
+    networks:
+      - ecomnetwork
+
 networks:
   ecomnetwork:
     name: ecomnetwork
@@ -69,3 +84,4 @@ volumes:
   backend_staticfiles:
   backend_media:
   # frontend_build:
+  elastic_data:

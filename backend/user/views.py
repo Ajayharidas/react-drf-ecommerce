@@ -6,7 +6,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import generics, status
 from rest_framework.views import APIView
-from product.models import Product
+from brand.documents import BrandDocument
+from category.documents import CategoryDocument
 from user.serializers import (
     SearchSerializer,
     UserRegistrationSerializer,
@@ -25,7 +26,7 @@ from drf_social_oauth2.views import TokenView, ConvertTokenView
 from user.decorators import modify_token_view_decorator
 from user.services import google_get_tokens
 from category.models import Category
-from django.db.models import Q, Value, Case, When, CharField
+from elasticsearch_dsl.query import MultiMatch
 
 logger = logging.getLogger(__name__)
 
@@ -166,23 +167,11 @@ class CustomRevokeTokenView(APIView):
         )
 
 
-# class SearchProductView(generics.ListAPIView):
-#     serializer_class = SearchSerializer
-
-
-#     def get_queryset(self):
-#         query = self.request.GET.get("query", "")
-#         print(f"Query : {query}")
-#         return Product.objects.filter(
-#             Q(name__istartswith=query) | Q(category__name__istartswith=query)
-#         ).annotate(
-#             match_type=Case(
-#                 When(name__istartswith=query, then=Value("name")),
-#                 When(category__name__istartswith=query, then=Value("category")),
-#                 output_field=CharField(),
-#             )
-#         )
 class SearchProductView(APIView):
+    serializer = SearchSerializer
+    brand_document = BrandDocument
+    category_document = CategoryDocument
+
     def get(self, request, *args, **kwargs):
         query = request.GET.get("query", "")
         if not query:
@@ -190,17 +179,36 @@ class SearchProductView(APIView):
                 {"message": "Query not found"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        category_queryset = (
-            Category.objects.filter(name__istartswith=query)
-            .values("id", "name", "slug")
-            .annotate(type=Value("category", output_field=CharField()))
-        )
+        try:
+            query = MultiMatch(query=query, fields=["name"])
+            brand_response = self.brand_document.search().query(query).execute()
+            category_response = self.category_document.search().query(query).execute()
 
-        product_queryset = (
-            Product.objects.filter(name__istartswith=query)
-            .values("id", "name", "slug")
-            .annotate(type=Value("product", output_field=CharField()))
-        )
+            combined_results = []
 
-        final_queryset = list(category_queryset) + list(product_queryset)
-        return Response(data=final_queryset)
+            for item in brand_response:
+                combined_results.append(
+                    {
+                        "id": item.id,
+                        "name": item.name,
+                        "slug": item.slug,
+                        "type": "brand",
+                    }
+                )
+
+            for item in category_response:
+                combined_results.append(
+                    {
+                        "id": item.id,
+                        "name": item.name,
+                        "slug": item.slug,
+                        "type": "category",
+                    }
+                )
+            serialized_data = self.serializer(combined_results, many=True).data
+            return Response(serialized_data)
+        except Exception as e:
+            return Response(
+                {"message": f"Error connecting to Elasticsearch: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

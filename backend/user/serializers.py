@@ -1,7 +1,9 @@
+from os import name
 from django.conf import settings
 from requests import delete
 from rest_framework import serializers, status
 from rest_framework.response import Response
+from brand.serializers import BrandSerializer
 from product.models import Product
 from user.models import CustomUser
 from django.contrib.auth import authenticate
@@ -68,10 +70,8 @@ class HomeSerializer(serializers.Serializer):
     child_categories = CategorySerializer(many=True)
 
 
-class SearchSerializer(serializers.ModelSerializer):
-    match_type = serializers.CharField()
-    category = CategorySerializer(many=True)
-
-    class Meta:
-        model = Product
-        fields = ("id", "name", "category", "match_type")
+class SearchSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    name = serializers.CharField()
+    slug = serializers.SlugField()
+    type = serializers.CharField()

@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import SearchModal from "./SearchModal";
+import SearchModal, { InputRef } from "./SearchModal";
 
 const Header: React.FC = () => {
   const [btnVisibility, setBtnVisibility] = useState(true);
   const [popupVisibility, setPopupVisibility] = useState(false);
+  const searchRef = useRef<InputRef | null>(null);
   const handlePopup = () => {
     setPopupVisibility(true);
     setBtnVisibility(false);
+    searchRef.current?.focusInput();
   };
   return (
     <>
@@ -78,6 +80,7 @@ const Header: React.FC = () => {
             </li>
           </ul>
           <SearchModal
+            ref={searchRef}
             popupVisibility={popupVisibility}
             setPopupVisibility={setPopupVisibility}
             setBtnVisibility={setBtnVisibility}
